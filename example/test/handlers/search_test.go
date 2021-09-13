@@ -8,14 +8,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"../data"
-	_ "github.com/stretchr/testify/mock"
+	"test.com/data"
 )
+
 func TestSearchHandlerReturnBadRequestWhenNoSearchCriteriaIsSent(t *testing.T) {
 	r, rw, handler := setupTest(&searchRequest{}, "GET", "/search", nil)
 
-
-handler.ServeHTTP(rw, r)
+  handler.ServeHTTP(rw, r)
 
 	if rw.Code != http.StatusBadRequest{
 		t.Errorf("Expected BadRequest %v", rw.Code)
@@ -39,15 +38,15 @@ type searchResponse struct {
 	Kittens []data.Kitten `json:"kittens"`
 }
 
-func newSearchHandler(m *data.MockStore) searchHandler{
-	return searchHandler{DataStore: m} // searchHandler 객체를 리턴
+func NewSearchHandler(m *data.MockStore) SearchHandler{
+	return SearchHandler{DataStore: m} // searchHandler 객체를 리턴
 }
 
-type searchHandler struct {
+type SearchHandler struct {
 	DataStore *data.MockStore
 } 
 
-func (s *searchHandler)  ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (s *SearchHandler)  ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 	
@@ -56,7 +55,7 @@ func (s *searchHandler)  ServeHTTP(rw http.ResponseWriter, r *http.Request) {
  
 	if err != nil || len(request.Query) < 1 {
 		http.Error(rw, "Bad request", http.StatusBadRequest)
-		return 
+		return
 	}
 
 		kittens := s.DataStore.Search(request.Query)
@@ -65,8 +64,8 @@ func (s *searchHandler)  ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		encoder.Encode(searchResponse{Kittens: kittens})
 } // Serve HTTP http.hanlder 객체 validation 미통과시 400 리턴, Search 결과 encoding 리턴
 
-func setupTest(d interface{}, m string, URI string, n io.Reader) (*http.Request, *httptest.ResponseRecorder, searchHandler) {
-	h := newSearchHandler(&data.MockStore{})
+func setupTest(d interface{}, m string, URI string, n io.Reader) (*http.Request, *httptest.ResponseRecorder, SearchHandler) {
+	h := NewSearchHandler(&data.MockStore{})
 	rw := httptest.NewRecorder()
 
 	if d == nil {
