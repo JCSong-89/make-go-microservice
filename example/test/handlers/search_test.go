@@ -3,37 +3,34 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 func TestSearchHandlerReturnBadRequestWhenNoSearchCriteriaIsSent(t *testing.T) {
-	handler := newSearchHandler()
-	request := httptest.NewRequest("GET", "/search", nil)
-	response := httptest.NewRecorder()
+	r, rw, handler := setupTest(&searchRequest{}, "GET", "/search", nil)
 
-handler.ServeHTTP(response, request)
 
-	if response.Code != http.StatusBadRequest{
-		t.Errorf("Expected BadRequest %v", response.Code)
+handler.ServeHTTP(rw, r)
+
+	if rw.Code != http.StatusBadRequest{
+		t.Errorf("Expected BadRequest %v", rw.Code)
 	} // 400을 리턴받지 않았을 때 테스트 실패
 }
 
 func TestSearchHandlerReturnBadRequestWHenBlankSearchCriteriaIsSent(t *testing.T) {
-	handler := newSearchHandler()
-	data, _ := json.Marshal(&searchRequest{})
-	request := httptest.NewRequest("POST", "/search", bytes.NewReader(data))
-	response := httptest.NewRecorder()
+		r, rw, handler := setupTest(&searchRequest{}, "POST", "/search", nil)
 
-	handler.ServeHTTP(response, request)
+	handler.ServeHTTP(rw, r)
 
-	if response.Code != http.StatusBadRequest{
-		t.Errorf("Expected BadRequest %v", response.Code)
+	if rw.Code != http.StatusBadRequest{
+		t.Errorf("Expected BadRequest %v", rw.Code)
 		} 
 	}
 
 type searchRequest struct {
-	Name string `json:"name"`
+	Query string `json:"query"`
 } // vaildation 규격
 
 func newSearchHandler() searchHandler{
@@ -49,11 +46,21 @@ func (s *searchHandler)  ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	
 	request := new(searchRequest)
 	err := decoder.Decode(&request)
-
-	if err != nil {
+ 
+	if err != nil || len(request.Query) < 1 {
 		http.Error(rw, "Bad request", http.StatusBadRequest)
 		return
 	}
 } // Serve HTTP http.hanlder 객체 validation 미통과시 400 리턴
 
+func setupTest(d interface{}, m string, URI string, n io.Reader) (*http.Request, *httptest.ResponseRecorder, searchHandler) {
+	h := newSearchHandler()
+	rw := httptest.NewRecorder()
 
+	if d == nil {
+		return httptest.NewRequest(m, URI, n), rw, h
+	}
+
+	body, _ := json.Marshal(d)
+	return httptest.NewRequest("POST", "/search", bytes.NewReader(body)), rw, h
+}
