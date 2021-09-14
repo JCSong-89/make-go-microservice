@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
-	"test.com/handlers"
 	"test.com/data"
+	"test.com/handlers"
 )
 
 func main() {
