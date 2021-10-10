@@ -17,11 +17,11 @@ func main() {
 		})
 
 		switch result {
-		case nil:
-		case breaker.ErrBreakerOpen:
-			fmt.Println("Breaker open")
-		default:
-			fmt.Println(result)
+			case nil:
+			case breaker.ErrBreakerOpen:
+				fmt.Println("Breaker open")
+			default:
+				fmt.Println(result)
 		}
 
 		time.Sleep(500 * time.Millisecond)
